@@ -1,15 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import * as THREE from 'three'
-import { Camera, RotateCcw, Scan, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { createDishPlate } from '../ar/createDishPlate'
 import {
   orientToQuaternion,
   requestOrientationPermission,
 } from '../ar/deviceOrientation'
 import { getDish } from '../data/menu'
-
-type Phase = 'boot' | 'aim' | 'placed' | 'error'
 
 export function PlateArPage() {
   const { id = '' } = useParams()
@@ -18,17 +16,7 @@ export function PlateArPage() {
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const wrapRef = useRef<HTMLDivElement>(null)
-
-  const [phase, setPhase] = useState<Phase>('boot')
   const [error, setError] = useState<string | null>(null)
-  const [hint, setHint] = useState('Apuntá a una mesa y tocá Colocar plato')
-
-  const engineRef = useRef<{
-    stop: () => void
-    place: () => void
-    reset: () => void
-  } | null>(null)
 
   useEffect(() => {
     if (!dish) return
@@ -45,13 +33,13 @@ export function PlateArPage() {
     const camQ = new THREE.Quaternion()
     let hasOrient = false
     let placed = false
+
     const getScreenOrient = () =>
       window.screen?.orientation?.angle ??
       (typeof window.orientation === 'number' ? window.orientation : 0)
 
     let screenOrient = getScreenOrient()
-
-    const orient = { alpha: 0, beta: 90, gamma: 0 }
+    const orient = { alpha: 0, beta: 75, gamma: 0 }
 
     const onOrient = (e: DeviceOrientationEvent) => {
       if (e.alpha == null || e.beta == null || e.gamma == null) return
@@ -64,8 +52,27 @@ export function PlateArPage() {
       screenOrient = getScreenOrient()
     }
 
+    const placeNow = () => {
+      if (!plate || placed) return
+      orientToQuaternion(
+        orient.alpha,
+        orient.beta,
+        orient.gamma,
+        screenOrient,
+        deviceQ,
+      )
+      offsetQ.copy(deviceQ).invert()
+      plate.visible = true
+      placed = true
+    }
+
     async function start() {
       try {
+        // Pedir permisos al entrar (viene del tap en "Ver 3D")
+        await requestOrientationPermission()
+        window.addEventListener('deviceorientation', onOrient, true)
+        window.addEventListener('orientationchange', onScreen)
+
         const video = videoRef.current
         const canvas = canvasRef.current
         if (!video || !canvas) return
@@ -92,7 +99,7 @@ export function PlateArPage() {
           0.01,
           40,
         )
-        camera.position.set(0, 1.35, 0.05)
+        camera.position.set(0, 1.25, 0.02)
 
         renderer = new THREE.WebGLRenderer({
           canvas,
@@ -109,16 +116,12 @@ export function PlateArPage() {
 
         const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.15)
         scene.add(hemi)
-        const key = new THREE.DirectionalLight(0xfff2e0, 1.35)
+        const key = new THREE.DirectionalLight(0xfff2e0, 1.4)
         key.position.set(1.2, 3.2, 1.4)
         key.castShadow = true
         key.shadow.mapSize.set(1024, 1024)
-        key.shadow.camera.near = 0.1
-        key.shadow.camera.far = 12
         scene.add(key)
-        const fill = new THREE.DirectionalLight(0xb8d0ff, 0.35)
-        fill.position.set(-2, 1.5, -1)
-        scene.add(fill)
+        scene.add(new THREE.DirectionalLight(0xb8d0ff, 0.35).translateX(-2))
 
         try {
           plate = await createDishPlate(currentDish.image, currentDish.plateCm)
@@ -128,28 +131,20 @@ export function PlateArPage() {
             currentDish.plateCm,
           )
         }
-        plate.visible = false
-        // Pose inicial: sobre la mesa frente a la cámara
-        plate.position.set(0, 0, -1.15)
-        plate.rotation.x = 0
+        plate.position.set(0, 0, -1.05)
         scene.add(plate)
 
-        // Retícula de ayuda antes de colocar
-        const reticle = new THREE.Mesh(
-          new THREE.RingGeometry(0.12, 0.15, 48),
-          new THREE.MeshBasicMaterial({
-            color: 0xff6a2b,
-            transparent: true,
-            opacity: 0.85,
-            side: THREE.DoubleSide,
-          }),
-        )
-        reticle.rotation.x = -Math.PI / 2
-        reticle.position.set(0, 0.002, -1.15)
-        scene.add(reticle)
-
-        window.addEventListener('deviceorientation', onOrient, true)
-        window.addEventListener('orientationchange', onScreen)
+        // Proyectar de inmediato
+        placeNow()
+        // Re-anclar cuando llegue la primera orientación real del teléfono
+        const waitOrient = window.setInterval(() => {
+          if (hasOrient) {
+            placed = false
+            placeNow()
+            window.clearInterval(waitOrient)
+          }
+        }, 50)
+        window.setTimeout(() => window.clearInterval(waitOrient), 2500)
 
         const resize = () => {
           if (!renderer || !canvas) return
@@ -162,48 +157,11 @@ export function PlateArPage() {
         window.addEventListener('resize', resize)
         resize()
 
-        const place = () => {
-          if (!plate) return
-          orientToQuaternion(
-            orient.alpha,
-            orient.beta,
-            orient.gamma,
-            screenOrient,
-            deviceQ,
-          )
-          // Congela el marco actual: a partir de acá el mundo queda quieto
-          offsetQ.copy(deviceQ).invert()
-          plate.visible = true
-          reticle.visible = false
-          placed = true
-          setPhase('placed')
-          setHint('Mové el celular: el plato se queda en la mesa')
-        }
-
-        const reset = () => {
-          if (!plate) return
-          placed = false
-          plate.visible = false
-          reticle.visible = true
-          offsetQ.identity()
-          setPhase('aim')
-          setHint('Apuntá a una mesa y tocá Colocar plato')
-        }
-
-        engineRef.current = {
-          stop: () => undefined,
-          place,
-          reset,
-        }
-
-        setPhase('aim')
-        setHint('Apuntá a una mesa y tocá Colocar plato')
-
         const tick = () => {
           if (stopped || !renderer) return
           raf = requestAnimationFrame(tick)
 
-          if (hasOrient) {
+          if (hasOrient && placed) {
             orientToQuaternion(
               orient.alpha,
               orient.beta,
@@ -211,58 +169,40 @@ export function PlateArPage() {
               screenOrient,
               deviceQ,
             )
-            if (placed) {
-              camQ.copy(offsetQ).multiply(deviceQ)
-              camera.quaternion.copy(camQ)
-            } else {
-              // Antes de colocar: cámara leve, reticle fija en vista
-              camera.quaternion.identity()
-              camera.position.set(0, 1.35, 0.05)
-              camera.lookAt(0, 0, -1.15)
-            }
+            camQ.copy(offsetQ).multiply(deviceQ)
+            camera.position.set(0, 1.25, 0.02)
+            camera.quaternion.copy(camQ)
           } else if (placed) {
-            // Desktop fallback: órbita suave para demostrar el anclaje
-            const t = performance.now() * 0.00035
-            camera.position.set(Math.sin(t) * 1.1, 1.15, Math.cos(t) * 1.1)
-            camera.lookAt(plate!.position)
-          } else {
-            camera.position.set(0, 1.35, 0.05)
-            camera.lookAt(0, 0, -1.15)
-          }
-
-          if (plate?.visible) {
-            // Micro-oscilación de luz, no del plato
-            key.position.x = 1.2 + Math.sin(performance.now() * 0.001) * 0.15
+            const t = performance.now() * 0.0003
+            camera.position.set(Math.sin(t) * 0.95, 1.2, Math.cos(t) * 0.95)
+            camera.lookAt(plate!.position.x, 0.05, plate!.position.z)
           }
 
           renderer.render(scene, camera)
         }
         tick()
 
-        engineRef.current.stop = () => {
-          cancelAnimationFrame(raf)
-          window.removeEventListener('deviceorientation', onOrient, true)
-          window.removeEventListener('orientationchange', onScreen)
+        return () => {
+          window.clearInterval(waitOrient)
           window.removeEventListener('resize', resize)
-          stream?.getTracks().forEach((t) => t.stop())
-          renderer?.dispose()
         }
       } catch (e) {
         console.error(e)
-        setError(
-          'No se pudo iniciar la cámara AR. Permití cámara y orientación, y usá HTTPS en el celular.',
-        )
-        setPhase('error')
+        setError('No se pudo abrir la cámara. Permití el acceso e intentá de nuevo.')
       }
     }
 
-    void start()
+    let extraCleanup: (() => void) | undefined
+    void start().then((cleanup) => {
+      extraCleanup = cleanup
+    })
 
     return () => {
       stopped = true
       cancelAnimationFrame(raf)
-      engineRef.current?.stop()
-      engineRef.current = null
+      extraCleanup?.()
+      window.removeEventListener('deviceorientation', onOrient, true)
+      window.removeEventListener('orientationchange', onScreen)
       stream?.getTracks().forEach((t) => t.stop())
       renderer?.dispose()
     }
@@ -279,87 +219,32 @@ export function PlateArPage() {
     )
   }
 
-  const onPlace = async () => {
-    const ok = await requestOrientationPermission()
-    if (!ok) {
-      setHint('Activá el permiso de movimiento para anclar el plato')
-    }
-    engineRef.current?.place()
-  }
-
   return (
-    <div className="ar-page ar-page-world" ref={wrapRef}>
+    <div className="ar-page ar-page-world ar-page-direct">
       <video ref={videoRef} className="ar-video" playsInline muted autoPlay />
       <canvas ref={canvasRef} className="ar-canvas" />
 
-      {phase === 'boot' && (
-        <div className="ar-loading">
-          <Camera size={28} />
-          <p>Preparando visión 3D…</p>
-        </div>
-      )}
+      <button
+        type="button"
+        className="ar-close-only"
+        onClick={() => navigate(`/dish/${dish.id}`)}
+        aria-label="Cerrar"
+      >
+        <X size={20} />
+      </button>
 
-      {phase === 'error' && (
+      {error && (
         <div className="ar-loading">
           <p>{error}</p>
-          <button type="button" className="btn btn-primary" onClick={() => navigate(-1)}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => navigate(`/dish/${dish.id}`)}
+          >
             Volver
           </button>
         </div>
       )}
-
-      <header className="ar-top">
-        <button
-          type="button"
-          className="close-btn"
-          onClick={() => navigate(`/dish/${dish.id}`)}
-          aria-label="Cerrar"
-        >
-          <X size={20} />
-        </button>
-        <div className="ar-title">
-          <Scan size={16} />
-          <div>
-            <strong>{dish.name}</strong>
-            <span>Plato anclado a la mesa · Ø {dish.plateCm} cm</span>
-          </div>
-        </div>
-      </header>
-
-      <aside className="ar-contents">
-        <p>Contiene</p>
-        <ul>
-          {dish.contents.map((c) => (
-            <li key={c}>{c}</li>
-          ))}
-        </ul>
-      </aside>
-
-      {phase === 'aim' && <div className="ar-aim-pulse" aria-hidden />}
-
-      <footer className="ar-controls">
-        <p className="ar-hint">{hint}</p>
-        <div className="ar-actions">
-          {phase !== 'placed' ? (
-            <button type="button" className="btn btn-primary btn-block" onClick={onPlace}>
-              Colocar plato en la mesa
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="btn btn-ghost btn-block"
-                onClick={() => engineRef.current?.reset()}
-              >
-                <RotateCcw size={16} /> Volver a colocar
-              </button>
-              <p className="ar-hint-mini">
-                Girá alrededor: el plato queda quieto y lo ves desde otros ángulos.
-              </p>
-            </>
-          )}
-        </div>
-      </footer>
     </div>
   )
 }

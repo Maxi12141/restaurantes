@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Check, Scan, X } from 'lucide-react'
+import { requestOrientationPermission } from '../ar/deviceOrientation'
 import { SafeImage } from '../components/SafeImage'
 import { StarRating } from '../components/StarRating'
 import { useCart } from '../context/CartContext'
@@ -91,9 +92,16 @@ export function DishDetailPage() {
         <p className="detail-price">{formatPrice(dish.price)}</p>
 
         <div className="detail-actions">
-          <Link to={`/dish/${dish.id}/ar`} className="btn btn-ar btn-block">
+          <button
+            type="button"
+            className="btn btn-ar btn-block"
+            onClick={async () => {
+              await requestOrientationPermission()
+              navigate(`/dish/${dish.id}/ar`)
+            }}
+          >
             <Scan size={18} /> Ver en mesa 3D (cámara)
-          </Link>
+          </button>
           <button
             type="button"
             className="btn btn-primary btn-block"
