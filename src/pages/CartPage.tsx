@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Minus, Plus, Trash2 } from 'lucide-react'
+import { SafeImage } from '../components/SafeImage'
 import { useCart } from '../context/CartContext'
 import { formatPrice } from '../data/menu'
 
@@ -49,7 +50,7 @@ export function CartPage() {
       <ul className="cart-list">
         {items.map(({ dish, qty }) => (
           <li key={dish.id} className="cart-item">
-            <img src={dish.image} alt="" />
+            <SafeImage src={dish.image} alt="" />
             <div className="cart-item-info">
               <strong>{dish.name}</strong>
               <span>{formatPrice(dish.price)}</span>

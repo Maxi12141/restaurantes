@@ -1,4 +1,5 @@
 import type { Category } from '../data/menu'
+import { SafeImage } from './SafeImage'
 
 type Props = {
   categories: Category[]
@@ -20,7 +21,7 @@ export function CategoryScroller({ categories, activeId, onSelect }: Props) {
             className={`category-chip ${active ? 'active' : ''}`}
             onClick={() => onSelect(cat.id)}
           >
-            <img src={cat.image} alt="" />
+            <SafeImage src={cat.image} alt="" />
             <span>{cat.name}</span>
           </button>
         )

@@ -7,6 +7,7 @@ import { DishDetailPage } from './pages/DishDetailPage'
 import { ReviewsPage } from './pages/ReviewsPage'
 import { CartPage } from './pages/CartPage'
 import { QrPage } from './pages/QrPage'
+import { PlateArPage } from './pages/PlateArPage'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
             <Route index element={<HomePage />} />
             <Route path="menu" element={<MenuPage />} />
             <Route path="dish/:id" element={<DishDetailPage />} />
+            <Route path="dish/:id/ar" element={<PlateArPage />} />
             <Route path="reviews" element={<ReviewsPage />} />
             <Route path="cart" element={<CartPage />} />
             <Route path="qr" element={<QrPage />} />

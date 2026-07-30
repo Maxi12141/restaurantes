@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Check, X } from 'lucide-react'
+import { Check, Scan, X } from 'lucide-react'
+import { SafeImage } from '../components/SafeImage'
 import { StarRating } from '../components/StarRating'
 import { useCart } from '../context/CartContext'
 import {
@@ -64,14 +65,14 @@ export function DishDetailPage() {
               to={`/dish/${s.id}`}
               className={`mini-thumb ${s.id === dish.id ? 'active' : ''}`}
             >
-              <img src={s.image} alt={s.name} />
+              <SafeImage src={s.image} alt={s.name} />
             </Link>
           ))}
         </div>
       </header>
 
       <div className="detail-hero">
-        <img src={dish.image} alt={dish.name} className="detail-circle" />
+        <SafeImage src={dish.image} alt={dish.name} className="detail-circle" />
       </div>
 
       <div className="detail-body">
@@ -84,21 +85,29 @@ export function DishDetailPage() {
             {dish.rating.toFixed(1)} · {dish.reviewsCount} opiniones
           </span>
         </div>
+        <p className="detail-meta">
+          Tamaño real aprox. Ø {dish.plateCm} cm · {dish.contents.join(' · ')}
+        </p>
         <p className="detail-price">{formatPrice(dish.price)}</p>
 
-        <button
-          type="button"
-          className="btn btn-primary btn-block"
-          onClick={handleAdd}
-        >
-          {added ? (
-            <>
-              <Check size={18} /> Agregado al pedido
-            </>
-          ) : (
-            'Agregar al pedido'
-          )}
-        </button>
+        <div className="detail-actions">
+          <Link to={`/dish/${dish.id}/ar`} className="btn btn-ar btn-block">
+            <Scan size={18} /> Ver en mesa 3D (cámara)
+          </Link>
+          <button
+            type="button"
+            className="btn btn-primary btn-block"
+            onClick={handleAdd}
+          >
+            {added ? (
+              <>
+                <Check size={18} /> Agregado al pedido
+              </>
+            ) : (
+              'Agregar al pedido'
+            )}
+          </button>
+        </div>
 
         <section className="opinion-box">
           <h2>Tu opinión importa</h2>

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, MapPin, Sparkles } from 'lucide-react'
+import { ArrowRight, MapPin, Scan, Sparkles } from 'lucide-react'
+import { SafeImage } from '../components/SafeImage'
 import { categories, dishes, formatPrice, restaurant } from '../data/menu'
 
 export function HomePage() {
@@ -10,10 +11,10 @@ export function HomePage() {
   return (
     <div className="home">
       <header className="home-hero">
-        <img className="home-cover" src={restaurant.cover} alt="" />
+        <SafeImage className="home-cover" src={restaurant.cover} alt="" />
         <div className="home-hero-overlay" />
         <div className="home-brand">
-          <img className="home-logo" src={restaurant.logo} alt="" />
+          <SafeImage className="home-logo" src={restaurant.logo} alt="" />
           <h1>{restaurant.name}</h1>
           <p>{restaurant.tagline}</p>
           <div className="home-meta">
@@ -31,12 +32,12 @@ export function HomePage() {
           </Link>
         </div>
         <p className="section-lead">
-          Mostrá fotos reales, precios y opiniones al cliente en la mesa.
+          Fotos, tamaño real en mesa con cámara 3D, precios y opiniones.
         </p>
         <div className="home-cats">
           {categories.map((cat) => (
             <Link key={cat.id} to={`/menu?cat=${cat.id}`} className="home-cat">
-              <img src={cat.image} alt="" />
+              <SafeImage src={cat.image} alt="" />
               <span>{cat.name}</span>
             </Link>
           ))}
@@ -51,13 +52,18 @@ export function HomePage() {
         </div>
         <div className="featured-rail">
           {featured.map((dish) => (
-            <Link key={dish.id} to={`/dish/${dish.id}`} className="featured-card">
-              <img src={dish.image} alt={dish.name} />
-              <div>
-                <strong>{dish.name}</strong>
-                <span>{formatPrice(dish.price)}</span>
-              </div>
-            </Link>
+            <article key={dish.id} className="featured-card">
+              <Link to={`/dish/${dish.id}`}>
+                <SafeImage src={dish.image} alt={dish.name} />
+                <div>
+                  <strong>{dish.name}</strong>
+                  <span>{formatPrice(dish.price)}</span>
+                </div>
+              </Link>
+              <Link to={`/dish/${dish.id}/ar`} className="featured-ar">
+                <Scan size={14} /> Ver 3D
+              </Link>
+            </article>
           ))}
         </div>
       </section>
