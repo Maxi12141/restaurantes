@@ -14,10 +14,11 @@ Modelos 3D de platos / comidas para colocar sobre el plato en AR.
 - Optimizar para web/móvil: geometría razonable, texturas comprimidas (KTX2 / WebP si el pipeline lo permite).
 - Nombre de archivo en `snake_case`, por ejemplo `burger.glb`, `milanesa.glb`.
 
-## Placeholders
+## Modelos
 
-Los `.glb` actuales son marcadores de ruta (no modelos finales).  
-Sustituilos **sin cambiar el nombre** por modelos profesionales.
+Hay GLB generados (burger, milanesa, pasta, pizza) listos para AR.  
+Sustituilos **sin cambiar el nombre** por modelos profesionales cuando los tengas.
 
 - No hace falta tocar código: las rutas en `foodModels.ts` ya apuntan aquí.
-- Si el archivo es inválido, vacío o menor a 2 KB, el AR usa la comida procedural de respaldo.
+- Regenerar los estilizados: `node scripts/generatePlaceholderModels.mjs`
+- Si el archivo es inválido o menor a 2 KB, el AR usa la comida procedural de respaldo.
