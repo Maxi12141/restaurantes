@@ -7,6 +7,7 @@ import {
   orientToQuaternion,
   requestOrientationPermission,
 } from '../ar/deviceOrientation'
+import { loadModel } from '../ar/loadModel'
 import { createRestaurantScene } from '../ar/scene'
 import { getDish } from '../data/menu'
 
@@ -119,6 +120,9 @@ export function PlateArPage() {
         })
         // Fondo nulo para que se vea el video de la cámara AR.
         scene.background = null
+
+        const test = await loadModel('/models/plates/white_plate.glb')
+        console.log('TEST WHITE PLATE:', test)
 
         try {
           plate = await createDishPlate(
