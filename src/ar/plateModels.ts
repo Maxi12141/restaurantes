@@ -8,5 +8,6 @@ const PLATE_MODEL_PATHS: Record<PlateType, string> = {
 
 /** Ruta pública del GLB correspondiente al tipo de plato. */
 export function getPlateModelPath(type: PlateType): string {
+  console.log('Plate path:', PLATE_MODEL_PATHS[type])
   return PLATE_MODEL_PATHS[type]
 }

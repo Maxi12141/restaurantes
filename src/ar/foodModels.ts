@@ -9,5 +9,6 @@ const FOOD_MODEL_PATHS: Record<FoodType, string> = {
 
 /** Ruta pública del GLB correspondiente al tipo de comida. */
 export function getFoodModelPath(type: FoodType): string {
+  console.log('Food path:', FOOD_MODEL_PATHS[type])
   return FOOD_MODEL_PATHS[type]
 }
