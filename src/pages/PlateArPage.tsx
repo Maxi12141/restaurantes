@@ -7,7 +7,6 @@ import {
   orientToQuaternion,
   requestOrientationPermission,
 } from '../ar/deviceOrientation'
-import { createRestaurantScene } from '../ar/scene'
 import { getDish } from '../data/menu'
 
 export function PlateArPage() {
@@ -111,14 +110,13 @@ export function PlateArPage() {
         renderer.setSize(canvas.clientWidth, canvas.clientHeight, false)
         renderer.outputColorSpace = THREE.SRGBColorSpace
         renderer.toneMapping = THREE.ACESFilmicToneMapping
-        renderer.toneMappingExposure = 1.15
+        renderer.toneMappingExposure = 1.2
         renderer.setClearColor(0x000000, 0)
+        renderer.shadowMap.enabled = true
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
-        const scene = createRestaurantScene({
-          renderer,
-          includeEnvironment: false,
-        })
-        // Fondo nulo para que se vea el video de la cámara AR.
+        // Escena limpia sobre la cámara (sin suelo oscuro)
+        const scene = new THREE.Scene()
         scene.background = null
 
         try {
@@ -136,7 +134,8 @@ export function PlateArPage() {
             currentDish.foodType ?? 'burger',
           )
         }
-        plate.position.set(0, 0, -1.05)
+        plate.position.set(0, -0.15, -1.15)
+        plate.visible = false
         scene.add(plate)
 
         // Proyectar de inmediato
