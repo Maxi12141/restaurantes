@@ -9,6 +9,7 @@ import {
 } from '../ar/deviceOrientation'
 import { loadModel } from '../ar/loadModel'
 import { createRestaurantScene } from '../ar/scene'
+import { testGLB } from '../ar/testGLB'
 import { getDish } from '../data/menu'
 
 export function PlateArPage() {
@@ -123,6 +124,7 @@ export function PlateArPage() {
 
         const test = await loadModel('/models/plates/white_plate.glb')
         console.log('TEST WHITE PLATE:', test)
+        testGLB('/models/plates/ceramic_plate.glb')
 
         try {
           plate = await createDishPlate(
