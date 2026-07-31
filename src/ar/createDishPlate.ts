@@ -82,17 +82,26 @@ export async function createDishPlate(
     )
   })
 
+  // Luz local suave para que el plato no quede negro sobre el video AR.
+  const localHemi = new THREE.HemisphereLight(0xffffff, 0xe6e8ec, 0.65)
+  localHemi.position.set(0, 1.2, 0)
+  group.add(localHemi)
+  const localKey = new THREE.DirectionalLight(0xffffff, 0.55)
+  localKey.position.set(1.2, 2.4, 1.4)
+  group.add(localKey)
+
   const plateModel = await loadModel(getPlateModelPath(plateType))
   console.log('PLATE MODEL:', plateModel)
 
   if (plateModel) {
-    console.log('ENTRO PLATE GLB')
+    console.log('USANDO MODELO REAL')
     const plate = plateModel.clone(true)
     plate.traverse(prepareGlbMesh)
     applyModelTransform(plate, getPlateTransform(plateType))
     group.add(plate)
   } else {
-    const plateMat = createPlateMaterial({ color: '#f4f1ea' })
+    console.log('USANDO FALLBACK')
+    const plateMat = createPlateMaterial({ color: '#f5f6f8' })
     const plateGeo = new THREE.LatheGeometry(makePlateProfile(), 72)
     const plate = new THREE.Mesh(plateGeo, plateMat)
     plate.castShadow = true
@@ -104,17 +113,18 @@ export async function createDishPlate(
   console.log('FOOD MODEL:', foodModel)
 
   if (foodModel) {
-    console.log('ENTRO FOOD GLB')
+    console.log('USANDO MODELO REAL')
     const food = foodModel.clone(true)
     food.traverse(prepareGlbMesh)
     applyModelTransform(food, getFoodTransform(foodType))
     group.add(food)
   } else {
-    // Comida con volumen (no sticker plano)
+    console.log('USANDO FALLBACK')
+    // Comida con volumen (no sticker plano) — materiales claros neutros
     const foodGeo = new THREE.CylinderGeometry(0.34, 0.36, 0.06, 48, 1, false)
     const foodTop = createFoodMaterial({ map: foodTex })
-    const foodSide = createFoodMaterial({ color: '#6b4a2b' })
-    const foodBottom = createFoodMaterial({ color: '#4a3422' })
+    const foodSide = createFoodMaterial({ color: '#e8e6e3' })
+    const foodBottom = createFoodMaterial({ color: '#dedcd8' })
     const food = new THREE.Mesh(foodGeo, [foodSide, foodTop, foodBottom])
     food.position.y = 0.055
     food.castShadow = true
@@ -135,14 +145,14 @@ export async function createDishPlate(
     group.add(mound)
   }
 
-  // Sombra de contacto en la mesa
+  // Sombra de contacto suave en la mesa
   const shadowCanvas = document.createElement('canvas')
   shadowCanvas.width = 256
   shadowCanvas.height = 256
   const ctx = shadowCanvas.getContext('2d')!
   const grad = ctx.createRadialGradient(128, 128, 20, 128, 128, 128)
-  grad.addColorStop(0, 'rgba(0,0,0,0.55)')
-  grad.addColorStop(0.55, 'rgba(0,0,0,0.18)')
+  grad.addColorStop(0, 'rgba(0,0,0,0.28)')
+  grad.addColorStop(0.55, 'rgba(0,0,0,0.1)')
   grad.addColorStop(1, 'rgba(0,0,0,0)')
   ctx.fillStyle = grad
   ctx.fillRect(0, 0, 256, 256)
@@ -159,14 +169,15 @@ export async function createDishPlate(
   shadow.position.y = 0.001
   group.add(shadow)
 
-  // Plano de mesa sutil (ayuda a leer el anclaje)
+  // Plano de mesa sutil (neutro, ayuda a leer el anclaje)
   const table = new THREE.Mesh(
     new THREE.CircleGeometry(0.95, 48),
     new THREE.MeshStandardMaterial({
-      color: '#8a6a4a',
-      roughness: 0.95,
+      color: '#d8d6d2',
+      roughness: 0.9,
+      metalness: 0,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.22,
     }),
   )
   table.rotation.x = -Math.PI / 2
