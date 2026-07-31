@@ -22,8 +22,8 @@ export async function loadModel(path: string): Promise<Group | null> {
         resolve(model)
       },
       undefined,
-      () => {
-        console.warn(`No se pudo cargar el modelo: ${path}`)
+      (error) => {
+        console.error('ERROR CARGANDO GLB:', path, error)
         resolve(null)
       },
     )
