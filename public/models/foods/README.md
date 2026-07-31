@@ -16,4 +16,8 @@ Modelos 3D de platos / comidas para colocar sobre el plato en AR.
 
 ## Placeholders
 
-Los `.glb` vacíos son marcadores de ruta. Sustitúyelos por modelos profesionales sin cambiar el nombre si el código ya los referencia.
+Los `.glb` actuales son marcadores de ruta (no modelos finales).  
+Sustituilos **sin cambiar el nombre** por modelos profesionales.
+
+- No hace falta tocar código: las rutas en `foodModels.ts` ya apuntan aquí.
+- Si el archivo es inválido, vacío o menor a 2 KB, el AR usa la comida procedural de respaldo.

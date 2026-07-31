@@ -16,4 +16,8 @@ Platos 3D usados como base para presentar comida en AR / escena.
 
 ## Placeholders
 
-Los `.glb` vacíos de esta carpeta son marcadores de ruta. Reemplázalos por modelos reales exportados desde Blender, Maya, etc.
+Los `.glb` actuales son marcadores de ruta (no modelos finales).  
+Reemplazalos **manteniendo el mismo nombre de archivo** por GLB reales exportados desde Blender, Maya, etc.
+
+- No hace falta cambiar código: `loadModel` usa estas rutas fijas.
+- Si el archivo es inválido, vacío o menor a 2 KB, el AR usa el plato procedural de respaldo.
