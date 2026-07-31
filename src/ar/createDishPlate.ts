@@ -33,6 +33,31 @@ function makePlateProfile() {
   return points
 }
 
+function prepareGlbMesh(obj: THREE.Object3D) {
+  if (!(obj instanceof THREE.Mesh)) return
+
+  console.log('MODELO:', obj.name, obj.material)
+
+  obj.castShadow = true
+  obj.receiveShadow = true
+
+  const materials = Array.isArray(obj.material) ? obj.material : [obj.material]
+  for (const material of materials) {
+    if (
+      !(material instanceof THREE.MeshStandardMaterial) &&
+      !(material instanceof THREE.MeshPhysicalMaterial)
+    ) {
+      continue
+    }
+
+    material.needsUpdate = true
+    material.side = THREE.DoubleSide
+    if (material.map) {
+      material.map.colorSpace = THREE.SRGBColorSpace
+    }
+  }
+}
+
 export async function createDishPlate(
   imageUrl: string,
   plateCm: number,
@@ -58,30 +83,12 @@ export async function createDishPlate(
   })
 
   const plateModel = await loadModel(getPlateModelPath(plateType))
+  console.log('PLATE MODEL:', plateModel)
 
   if (plateModel) {
+    console.log('ENTRO PLATE GLB')
     const plate = plateModel.clone(true)
-    plate.traverse((obj) => {
-      if (!(obj instanceof THREE.Mesh)) return
-
-      obj.castShadow = true
-      obj.receiveShadow = true
-
-      if (Array.isArray(obj.material)) {
-        obj.material.forEach((material) => {
-          material.needsUpdate = true
-        })
-      } else {
-        obj.material.needsUpdate = true
-
-        if (
-          obj.material instanceof THREE.MeshStandardMaterial ||
-          obj.material instanceof THREE.MeshPhysicalMaterial
-        ) {
-          obj.material.envMapIntensity = 1.2
-        }
-      }
-    })
+    plate.traverse(prepareGlbMesh)
     applyModelTransform(plate, getPlateTransform(plateType))
     group.add(plate)
   } else {
@@ -94,30 +101,12 @@ export async function createDishPlate(
   }
 
   const foodModel = await loadModel(getFoodModelPath(foodType))
+  console.log('FOOD MODEL:', foodModel)
 
   if (foodModel) {
+    console.log('ENTRO FOOD GLB')
     const food = foodModel.clone(true)
-    food.traverse((obj) => {
-      if (!(obj instanceof THREE.Mesh)) return
-
-      obj.castShadow = true
-      obj.receiveShadow = true
-
-      if (Array.isArray(obj.material)) {
-        obj.material.forEach((material) => {
-          material.needsUpdate = true
-        })
-      } else {
-        obj.material.needsUpdate = true
-
-        if (
-          obj.material instanceof THREE.MeshStandardMaterial ||
-          obj.material instanceof THREE.MeshPhysicalMaterial
-        ) {
-          obj.material.envMapIntensity = 1.2
-        }
-      }
-    })
+    food.traverse(prepareGlbMesh)
     applyModelTransform(food, getFoodTransform(foodType))
     group.add(food)
   } else {
