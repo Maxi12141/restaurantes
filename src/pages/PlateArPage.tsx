@@ -7,6 +7,7 @@ import {
   orientToQuaternion,
   requestOrientationPermission,
 } from '../ar/deviceOrientation'
+import { createRestaurantScene } from '../ar/scene'
 import { getDish } from '../data/menu'
 
 export function PlateArPage() {
@@ -92,7 +93,6 @@ export function PlateArPage() {
         video.srcObject = stream
         await video.play()
 
-        const scene = new THREE.Scene()
         const camera = new THREE.PerspectiveCamera(
           60,
           canvas.clientWidth / Math.max(canvas.clientHeight, 1),
@@ -110,25 +110,27 @@ export function PlateArPage() {
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         renderer.setSize(canvas.clientWidth, canvas.clientHeight, false)
         renderer.outputColorSpace = THREE.SRGBColorSpace
-        renderer.shadowMap.enabled = true
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap
         renderer.setClearColor(0x000000, 0)
 
-        const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.15)
-        scene.add(hemi)
-        const key = new THREE.DirectionalLight(0xfff2e0, 1.4)
-        key.position.set(1.2, 3.2, 1.4)
-        key.castShadow = true
-        key.shadow.mapSize.set(1024, 1024)
-        scene.add(key)
-        scene.add(new THREE.DirectionalLight(0xb8d0ff, 0.35).translateX(-2))
+        const scene = createRestaurantScene({
+          renderer,
+        })
+        // Fondo nulo para que se vea el video de la cámara AR.
+        scene.background = null
 
         try {
-          plate = await createDishPlate(currentDish.image, currentDish.plateCm)
+          plate = await createDishPlate(
+            currentDish.image,
+            currentDish.plateCm,
+            currentDish.plateType ?? 'white',
+            currentDish.foodType ?? 'burger',
+          )
         } catch {
           plate = await createDishPlate(
             'https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?auto=format&fit=crop&w=900&q=80',
             currentDish.plateCm,
+            currentDish.plateType ?? 'white',
+            currentDish.foodType ?? 'burger',
           )
         }
         plate.position.set(0, 0, -1.05)

@@ -15,6 +15,10 @@ export type Dish = {
   reviewsCount: number
   /** Diámetro real aproximado del plato/vaso en centímetros */
   plateCm: number
+  /** Tipo de plato GLB; por defecto `white` si falta. */
+  plateType?: 'white' | 'black' | 'ceramic'
+  /** Tipo de comida GLB; por defecto `burger` si falta. */
+  foodType?: 'burger' | 'milanesa' | 'pasta' | 'pizza'
   contents: string[]
 }
 
@@ -83,6 +87,8 @@ export const dishes: Dish[] = [
     rating: 4.8,
     reviewsCount: 24,
     plateCm: 22,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Mollejas', 'Limón', 'Perejil'],
   },
   {
@@ -96,6 +102,8 @@ export const dishes: Dish[] = [
     rating: 4.5,
     reviewsCount: 18,
     plateCm: 24,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Hojas verdes', 'Cherry', 'Queso', 'Vinagreta'],
   },
   {
@@ -109,6 +117,8 @@ export const dishes: Dish[] = [
     rating: 4.9,
     reviewsCount: 41,
     plateCm: 26,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Carne', 'Humita', 'Queso'],
   },
   {
@@ -122,6 +132,8 @@ export const dishes: Dish[] = [
     rating: 4.9,
     reviewsCount: 67,
     plateCm: 28,
+    plateType: 'ceramic',
+    foodType: 'milanesa',
     contents: ['Milanesa de pollo', 'Puré', 'Limón', 'Verdes'],
   },
   {
@@ -135,6 +147,8 @@ export const dishes: Dish[] = [
     rating: 4.7,
     reviewsCount: 52,
     plateCm: 30,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Bife de chorizo', 'Sal gruesa'],
   },
   {
@@ -148,6 +162,8 @@ export const dishes: Dish[] = [
     rating: 4.6,
     reviewsCount: 33,
     plateCm: 26,
+    plateType: 'white',
+    foodType: 'pasta',
     contents: ['Ravioles', 'Salsa rosa', 'Albahaca'],
   },
   {
@@ -161,6 +177,8 @@ export const dishes: Dish[] = [
     rating: 4.8,
     reviewsCount: 88,
     plateCm: 24,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Doble blend', 'Cheddar', 'Panceta', 'Papas'],
   },
   {
@@ -174,6 +192,8 @@ export const dishes: Dish[] = [
     rating: 4.4,
     reviewsCount: 29,
     plateCm: 18,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Papas', 'Alioli'],
   },
   {
@@ -187,6 +207,8 @@ export const dishes: Dish[] = [
     rating: 4.3,
     reviewsCount: 15,
     plateCm: 16,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Puré', 'Manteca'],
   },
   {
@@ -200,6 +222,8 @@ export const dishes: Dish[] = [
     rating: 4.5,
     reviewsCount: 22,
     plateCm: 22,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Lechuga', 'Crutones', 'Parmesano'],
   },
   {
@@ -213,6 +237,8 @@ export const dishes: Dish[] = [
     rating: 4.7,
     reviewsCount: 36,
     plateCm: 8,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Limón', 'Menta', 'Jengibre'],
   },
   {
@@ -226,6 +252,8 @@ export const dishes: Dish[] = [
     rating: 4.8,
     reviewsCount: 44,
     plateCm: 8,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Malbec'],
   },
   {
@@ -239,6 +267,8 @@ export const dishes: Dish[] = [
     rating: 4.6,
     reviewsCount: 31,
     plateCm: 7,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['IPA 473 ml'],
   },
   {
@@ -252,6 +282,8 @@ export const dishes: Dish[] = [
     rating: 4.9,
     reviewsCount: 55,
     plateCm: 16,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Mascarpone', 'Café', 'Cacao'],
   },
   {
@@ -265,6 +297,8 @@ export const dishes: Dish[] = [
     rating: 4.7,
     reviewsCount: 27,
     plateCm: 14,
+    plateType: 'white',
+    foodType: 'burger',
     contents: ['Flan', 'Dulce de leche', 'Crema'],
   },
 ]

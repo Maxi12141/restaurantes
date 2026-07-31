@@ -1,4 +1,13 @@
 import * as THREE from 'three'
+import { getFoodModelPath, type FoodType } from './foodModels'
+import { loadModel } from './loadModel'
+import { createFoodMaterial, createPlateMaterial } from './materials'
+import {
+  applyModelTransform,
+  getFoodTransform,
+  getPlateTransform,
+} from './modelTransform'
+import { getPlateModelPath, type PlateType } from './plateModels'
 
 function makePlateProfile() {
   const points: THREE.Vector2[] = []
@@ -27,6 +36,8 @@ function makePlateProfile() {
 export async function createDishPlate(
   imageUrl: string,
   plateCm: number,
+  plateType: PlateType,
+  foodType: FoodType,
 ): Promise<THREE.Group> {
   const group = new THREE.Group()
   const scale = plateCm / 28 // 28 cm = radio ~0.5 unidades
@@ -46,52 +57,64 @@ export async function createDishPlate(
     )
   })
 
-  const plateMat = new THREE.MeshStandardMaterial({
-    color: '#f4f1ea',
-    roughness: 0.35,
-    metalness: 0.05,
-  })
-  const plateGeo = new THREE.LatheGeometry(makePlateProfile(), 72)
-  const plate = new THREE.Mesh(plateGeo, plateMat)
-  plate.castShadow = true
-  plate.receiveShadow = true
-  group.add(plate)
+  const plateModel = await loadModel(getPlateModelPath(plateType))
 
-  // Comida con volumen (no sticker plano)
-  const foodGeo = new THREE.CylinderGeometry(0.34, 0.36, 0.06, 48, 1, false)
-  const foodTop = new THREE.MeshStandardMaterial({
-    map: foodTex,
-    roughness: 0.75,
-    metalness: 0.0,
-  })
-  const foodSide = new THREE.MeshStandardMaterial({
-    color: '#6b4a2b',
-    roughness: 0.9,
-  })
-  const foodBottom = new THREE.MeshStandardMaterial({
-    color: '#4a3422',
-    roughness: 1,
-  })
-  const food = new THREE.Mesh(foodGeo, [foodSide, foodTop, foodBottom])
-  food.position.y = 0.055
-  food.castShadow = true
-  food.receiveShadow = true
-  group.add(food)
+  if (plateModel) {
+    const plate = plateModel.clone(true)
+    plate.traverse((obj) => {
+      if (!(obj instanceof THREE.Mesh)) return
+      obj.material = createPlateMaterial()
+      obj.castShadow = true
+      obj.receiveShadow = true
+    })
+    applyModelTransform(plate, getPlateTransform(plateType))
+    group.add(plate)
+  } else {
+    const plateMat = createPlateMaterial({ color: '#f4f1ea' })
+    const plateGeo = new THREE.LatheGeometry(makePlateProfile(), 72)
+    const plate = new THREE.Mesh(plateGeo, plateMat)
+    plate.castShadow = true
+    plate.receiveShadow = true
+    group.add(plate)
+  }
 
-  // Capa superior ligeramente abombada para dar relieve
-  const mound = new THREE.Mesh(
-    new THREE.SphereGeometry(0.28, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.35),
-    new THREE.MeshStandardMaterial({
-      map: foodTex,
-      roughness: 0.8,
-      transparent: true,
-      opacity: 0.92,
-    }),
-  )
-  mound.position.y = 0.07
-  mound.scale.set(1, 0.45, 1)
-  mound.castShadow = true
-  group.add(mound)
+  const foodModel = await loadModel(getFoodModelPath(foodType))
+
+  if (foodModel) {
+    const food = foodModel.clone(true)
+    food.traverse((obj) => {
+      if (!(obj instanceof THREE.Mesh)) return
+      obj.material = createFoodMaterial()
+      obj.castShadow = true
+      obj.receiveShadow = true
+    })
+    applyModelTransform(food, getFoodTransform(foodType))
+    group.add(food)
+  } else {
+    // Comida con volumen (no sticker plano)
+    const foodGeo = new THREE.CylinderGeometry(0.34, 0.36, 0.06, 48, 1, false)
+    const foodTop = createFoodMaterial({ map: foodTex })
+    const foodSide = createFoodMaterial({ color: '#6b4a2b' })
+    const foodBottom = createFoodMaterial({ color: '#4a3422' })
+    const food = new THREE.Mesh(foodGeo, [foodSide, foodTop, foodBottom])
+    food.position.y = 0.055
+    food.castShadow = true
+    food.receiveShadow = true
+    group.add(food)
+
+    // Capa superior ligeramente abombada para dar relieve
+    const moundMat = createFoodMaterial({ map: foodTex })
+    moundMat.transparent = true
+    moundMat.opacity = 0.92
+    const mound = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.35),
+      moundMat,
+    )
+    mound.position.y = 0.07
+    mound.scale.set(1, 0.45, 1)
+    mound.castShadow = true
+    group.add(mound)
+  }
 
   // Sombra de contacto en la mesa
   const shadowCanvas = document.createElement('canvas')
