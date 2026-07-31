@@ -63,9 +63,24 @@ export async function createDishPlate(
     const plate = plateModel.clone(true)
     plate.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return
-      obj.material = createPlateMaterial()
+
       obj.castShadow = true
       obj.receiveShadow = true
+
+      if (Array.isArray(obj.material)) {
+        obj.material.forEach((material) => {
+          material.needsUpdate = true
+        })
+      } else {
+        obj.material.needsUpdate = true
+
+        if (
+          obj.material instanceof THREE.MeshStandardMaterial ||
+          obj.material instanceof THREE.MeshPhysicalMaterial
+        ) {
+          obj.material.envMapIntensity = 1.2
+        }
+      }
     })
     applyModelTransform(plate, getPlateTransform(plateType))
     group.add(plate)
@@ -84,9 +99,24 @@ export async function createDishPlate(
     const food = foodModel.clone(true)
     food.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return
-      obj.material = createFoodMaterial()
+
       obj.castShadow = true
       obj.receiveShadow = true
+
+      if (Array.isArray(obj.material)) {
+        obj.material.forEach((material) => {
+          material.needsUpdate = true
+        })
+      } else {
+        obj.material.needsUpdate = true
+
+        if (
+          obj.material instanceof THREE.MeshStandardMaterial ||
+          obj.material instanceof THREE.MeshPhysicalMaterial
+        ) {
+          obj.material.envMapIntensity = 1.2
+        }
+      }
     })
     applyModelTransform(food, getFoodTransform(foodType))
     group.add(food)

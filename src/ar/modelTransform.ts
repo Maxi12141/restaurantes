@@ -20,34 +20,31 @@ export type FoodType = 'burger' | 'milanesa' | 'pasta' | 'pizza'
 
 const PLATE_TRANSFORMS: Record<PlateType, ModelTransform> = {
   white: {
-    scale: 1,
-    position: { y: 0 },
+    scale: 0.55,
   },
   black: {
-    scale: 1,
-    position: { y: 0 },
+    scale: 0.55,
   },
   ceramic: {
-    scale: 1.05,
-    position: { y: 0 },
+    scale: 0.6,
   },
 }
 
 const FOOD_TRANSFORMS: Record<FoodType, ModelTransform> = {
   burger: {
-    scale: 1,
-    position: { y: 0.05 },
+    scale: 0.45,
+    position: { y: 0.08 },
   },
   milanesa: {
-    scale: 1,
-    position: { y: 0.04 },
+    scale: 0.55,
+    position: { y: 0.06 },
   },
   pasta: {
-    scale: 0.9,
-    position: { y: 0.05 },
+    scale: 0.45,
+    position: { y: 0.07 },
   },
   pizza: {
-    scale: 0.85,
+    scale: 0.4,
     position: { y: 0.05 },
   },
 }
@@ -62,7 +59,7 @@ export function getFoodTransform(type: FoodType): ModelTransform {
   return FOOD_TRANSFORMS[type]
 }
 
-/** Aplica escala, posición y rotación a un Object3D con defaults seguros. */
+/** Aplica escala, posición (aditiva) y rotación a un Object3D. */
 export function applyModelTransform(
   object: THREE.Object3D,
   transform: ModelTransform,
@@ -70,11 +67,9 @@ export function applyModelTransform(
   const scale = transform.scale ?? 1
   object.scale.setScalar(scale)
 
-  object.position.set(
-    transform.position?.x ?? 0,
-    transform.position?.y ?? 0,
-    transform.position?.z ?? 0,
-  )
+  object.position.x += transform.position?.x ?? 0
+  object.position.y += transform.position?.y ?? 0
+  object.position.z += transform.position?.z ?? 0
 
   object.rotation.set(
     transform.rotation?.x ?? 0,
