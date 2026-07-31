@@ -11,32 +11,48 @@ import { getPlateModelPath, type PlateType } from './plateModels'
 
 function makePlateProfile() {
   const points: THREE.Vector2[] = []
-  // Perfil de plato hondo/cerámico (radio en X, altura en Y)
+  // Plato hondo tipo porcelana de restaurante
   const samples = [
-    [0.0, 0.02],
-    [0.08, 0.018],
-    [0.18, 0.016],
-    [0.28, 0.02],
-    [0.36, 0.035],
-    [0.42, 0.055],
-    [0.46, 0.07],
-    [0.48, 0.078],
+    [0.0, 0.028],
+    [0.1, 0.026],
+    [0.2, 0.024],
+    [0.3, 0.028],
+    [0.38, 0.045],
+    [0.44, 0.07],
+    [0.475, 0.095],
+    [0.5, 0.11],
+    [0.505, 0.1],
     [0.49, 0.07],
-    [0.47, 0.05],
-    [0.44, 0.03],
-    [0.4, 0.012],
-    [0.32, 0.004],
-    [0.2, 0.0],
+    [0.46, 0.04],
+    [0.4, 0.016],
+    [0.28, 0.006],
+    [0.12, 0.002],
     [0.0, 0.0],
   ] as const
   for (const [x, y] of samples) points.push(new THREE.Vector2(x, y))
   return points
 }
 
+function glbHasTextures(root: THREE.Object3D): boolean {
+  let hasMap = false
+  root.traverse((obj) => {
+    if (!(obj instanceof THREE.Mesh)) return
+    const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
+    for (const mat of mats) {
+      if (
+        mat &&
+        'map' in mat &&
+        (mat as THREE.MeshStandardMaterial).map
+      ) {
+        hasMap = true
+      }
+    }
+  })
+  return hasMap
+}
+
 function prepareGlbMesh(obj: THREE.Object3D) {
   if (!(obj instanceof THREE.Mesh)) return
-
-  console.log('MODELO:', obj.name, obj.material)
 
   obj.castShadow = true
   obj.receiveShadow = true
@@ -51,11 +67,97 @@ function prepareGlbMesh(obj: THREE.Object3D) {
     }
 
     material.needsUpdate = true
-    material.side = THREE.DoubleSide
     if (material.map) {
       material.map.colorSpace = THREE.SRGBColorSpace
+      material.map.anisotropy = 8
     }
   }
+}
+
+/** Comida volumétrica con la foto real del plato (look de menú AR profesional). */
+function createPhotoFood(
+  foodTex: THREE.Texture,
+  foodType: FoodType,
+): THREE.Group {
+  const food = new THREE.Group()
+  food.name = 'photoFood'
+
+  const radius =
+    foodType === 'pizza' ? 0.38 : foodType === 'pasta' ? 0.32 : 0.34
+  const height =
+    foodType === 'burger' ? 0.1 : foodType === 'pasta' ? 0.085 : 0.055
+  const bulge =
+    foodType === 'burger' ? 0.55 : foodType === 'pasta' ? 0.5 : 0.38
+
+  const sideMat = createFoodMaterial({ color: '#e9e4dc' })
+  const topMat = createFoodMaterial({ map: foodTex })
+  topMat.roughness = 0.62
+  const bottomMat = createFoodMaterial({ color: '#ddd6cc' })
+
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius * 0.96, radius, height, 64, 1, false),
+    [sideMat, topMat, bottomMat],
+  )
+  body.position.y = 0.035 + height * 0.5
+  body.castShadow = true
+  body.receiveShadow = true
+  food.add(body)
+
+  const domeMat = createFoodMaterial({ map: foodTex })
+  domeMat.roughness = 0.68
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      radius * 0.88,
+      48,
+      24,
+      0,
+      Math.PI * 2,
+      0,
+      Math.PI * bulge,
+    ),
+    domeMat,
+  )
+  dome.position.y = 0.03 + height * 0.55
+  dome.scale.set(1, foodType === 'burger' ? 0.55 : 0.42, 1)
+  dome.castShadow = true
+  food.add(dome)
+
+  // Aro de borde suave para integrar foto y plato
+  const rim = new THREE.Mesh(
+    new THREE.TorusGeometry(radius * 0.97, 0.012, 12, 64),
+    new THREE.MeshStandardMaterial({
+      color: '#d8d0c6',
+      roughness: 0.85,
+      metalness: 0,
+    }),
+  )
+  rim.rotation.x = Math.PI / 2
+  rim.position.y = 0.035 + height
+  rim.castShadow = true
+  food.add(rim)
+
+  return food
+}
+
+function createPorcelainPlate(plateType: PlateType): THREE.Mesh {
+  const colors: Record<PlateType, string> = {
+    white: '#f7f8fa',
+    black: '#2c2c30',
+    ceramic: '#f3ebe3',
+  }
+  const mat = createPlateMaterial({ color: colors[plateType] })
+  if (plateType === 'black') {
+    mat.roughness = 0.35
+    mat.clearcoat = 0.45
+  }
+  const plate = new THREE.Mesh(
+    new THREE.LatheGeometry(makePlateProfile(), 96),
+    mat,
+  )
+  plate.name = 'porcelainPlate'
+  plate.castShadow = true
+  plate.receiveShadow = true
+  return plate
 }
 
 export async function createDishPlate(
@@ -65,7 +167,7 @@ export async function createDishPlate(
   foodType: FoodType,
 ): Promise<THREE.Group> {
   const group = new THREE.Group()
-  const scale = plateCm / 28 // 28 cm = radio ~0.5 unidades
+  const scale = plateCm / 28
 
   const loader = new THREE.TextureLoader()
   loader.setCrossOrigin('anonymous')
@@ -75,6 +177,8 @@ export async function createDishPlate(
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace
         tex.anisotropy = 8
+        tex.wrapS = THREE.ClampToEdgeWrapping
+        tex.wrapT = THREE.ClampToEdgeWrapping
         resolve(tex)
       },
       undefined,
@@ -82,37 +186,34 @@ export async function createDishPlate(
     )
   })
 
-  // Luz local suave para que el plato no quede negro sobre el video AR.
-  const localHemi = new THREE.HemisphereLight(0xffffff, 0xe6e8ec, 0.65)
-  localHemi.position.set(0, 1.2, 0)
+  const localHemi = new THREE.HemisphereLight(0xffffff, 0xe8eaee, 0.9)
+  localHemi.position.set(0, 1.4, 0)
   group.add(localHemi)
-  const localKey = new THREE.DirectionalLight(0xffffff, 0.55)
-  localKey.position.set(1.2, 2.4, 1.4)
+  const localKey = new THREE.DirectionalLight(0xffffff, 0.85)
+  localKey.position.set(1.4, 2.8, 1.6)
+  localKey.castShadow = true
   group.add(localKey)
+  const localFill = new THREE.DirectionalLight(0xf2f4f8, 0.35)
+  localFill.position.set(-1.6, 1.8, -1.2)
+  group.add(localFill)
 
   const plateModel = await loadModel(getPlateModelPath(plateType))
-  console.log('PLATE MODEL:', plateModel)
-
-  if (plateModel) {
+  if (plateModel && glbHasTextures(plateModel)) {
     console.log('USANDO MODELO REAL')
     const plate = plateModel.clone(true)
     plate.traverse(prepareGlbMesh)
     applyModelTransform(plate, getPlateTransform(plateType))
     group.add(plate)
   } else {
+    // Plato porcelana procedural (mejor que GLB low-poly sin textura)
     console.log('USANDO FALLBACK')
-    const plateMat = createPlateMaterial({ color: '#f5f6f8' })
-    const plateGeo = new THREE.LatheGeometry(makePlateProfile(), 72)
-    const plate = new THREE.Mesh(plateGeo, plateMat)
-    plate.castShadow = true
-    plate.receiveShadow = true
+    const plate = createPorcelainPlate(plateType)
     group.add(plate)
   }
 
   const foodModel = await loadModel(getFoodModelPath(foodType))
-  console.log('FOOD MODEL:', foodModel)
-
-  if (foodModel) {
+  // Solo usamos GLB de comida si trae texturas PBR reales; si no, foto 3D del plato.
+  if (foodModel && glbHasTextures(foodModel)) {
     console.log('USANDO MODELO REAL')
     const food = foodModel.clone(true)
     food.traverse(prepareGlbMesh)
@@ -120,70 +221,32 @@ export async function createDishPlate(
     group.add(food)
   } else {
     console.log('USANDO FALLBACK')
-    // Comida con volumen (no sticker plano) — materiales claros neutros
-    const foodGeo = new THREE.CylinderGeometry(0.34, 0.36, 0.06, 48, 1, false)
-    const foodTop = createFoodMaterial({ map: foodTex })
-    const foodSide = createFoodMaterial({ color: '#e8e6e3' })
-    const foodBottom = createFoodMaterial({ color: '#dedcd8' })
-    const food = new THREE.Mesh(foodGeo, [foodSide, foodTop, foodBottom])
-    food.position.y = 0.055
-    food.castShadow = true
-    food.receiveShadow = true
+    const food = createPhotoFood(foodTex, foodType)
     group.add(food)
-
-    // Capa superior ligeramente abombada para dar relieve
-    const moundMat = createFoodMaterial({ map: foodTex })
-    moundMat.transparent = true
-    moundMat.opacity = 0.92
-    const mound = new THREE.Mesh(
-      new THREE.SphereGeometry(0.28, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.35),
-      moundMat,
-    )
-    mound.position.y = 0.07
-    mound.scale.set(1, 0.45, 1)
-    mound.castShadow = true
-    group.add(mound)
   }
 
-  // Sombra de contacto suave en la mesa
   const shadowCanvas = document.createElement('canvas')
   shadowCanvas.width = 256
   shadowCanvas.height = 256
   const ctx = shadowCanvas.getContext('2d')!
-  const grad = ctx.createRadialGradient(128, 128, 20, 128, 128, 128)
-  grad.addColorStop(0, 'rgba(0,0,0,0.28)')
-  grad.addColorStop(0.55, 'rgba(0,0,0,0.1)')
-  grad.addColorStop(1, 'rgba(0,0,0,0)')
+  const grad = ctx.createRadialGradient(128, 128, 16, 128, 128, 120)
+  grad.addColorStop(0, 'rgba(20,16,12,0.35)')
+  grad.addColorStop(0.45, 'rgba(20,16,12,0.12)')
+  grad.addColorStop(1, 'rgba(20,16,12,0)')
   ctx.fillStyle = grad
   ctx.fillRect(0, 0, 256, 256)
-  const shadowTex = new THREE.CanvasTexture(shadowCanvas)
   const shadow = new THREE.Mesh(
-    new THREE.CircleGeometry(0.62, 48),
+    new THREE.CircleGeometry(0.7, 64),
     new THREE.MeshBasicMaterial({
-      map: shadowTex,
+      map: new THREE.CanvasTexture(shadowCanvas),
       transparent: true,
       depthWrite: false,
+      opacity: 0.9,
     }),
   )
   shadow.rotation.x = -Math.PI / 2
   shadow.position.y = 0.001
   group.add(shadow)
-
-  // Plano de mesa sutil (neutro, ayuda a leer el anclaje)
-  const table = new THREE.Mesh(
-    new THREE.CircleGeometry(0.95, 48),
-    new THREE.MeshStandardMaterial({
-      color: '#d8d6d2',
-      roughness: 0.9,
-      metalness: 0,
-      transparent: true,
-      opacity: 0.22,
-    }),
-  )
-  table.rotation.x = -Math.PI / 2
-  table.position.y = 0.0
-  table.receiveShadow = true
-  group.add(table)
 
   group.scale.setScalar(scale)
   group.userData.plateCm = plateCm

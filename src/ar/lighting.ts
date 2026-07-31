@@ -19,10 +19,10 @@ export function createRestaurantLighting(
   options: RestaurantLightingOptions = {},
 ): THREE.Group {
   const {
-    ambientIntensity = 0.55,
-    hemiIntensity = 0.75,
-    keyIntensity = 0.95,
-    fillIntensity = 0.4,
+    ambientIntensity = 0.7,
+    hemiIntensity = 0.9,
+    keyIntensity = 1.05,
+    fillIntensity = 0.5,
   } = options
 
   const group = new THREE.Group()

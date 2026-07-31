@@ -20,32 +20,32 @@ export type FoodType = 'burger' | 'milanesa' | 'pasta' | 'pizza'
 
 const PLATE_TRANSFORMS: Record<PlateType, ModelTransform> = {
   white: {
-    scale: 0.55,
+    scale: 1,
   },
   black: {
-    scale: 0.55,
+    scale: 1,
   },
   ceramic: {
-    scale: 0.6,
+    scale: 1.05,
   },
 }
 
 const FOOD_TRANSFORMS: Record<FoodType, ModelTransform> = {
   burger: {
-    scale: 0.45,
-    position: { y: 0.08 },
+    scale: 1,
+    position: { y: 0.04 },
   },
   milanesa: {
-    scale: 0.55,
-    position: { y: 0.06 },
+    scale: 1,
+    position: { y: 0.035 },
   },
   pasta: {
-    scale: 0.45,
-    position: { y: 0.07 },
+    scale: 0.95,
+    position: { y: 0.04 },
   },
   pizza: {
-    scale: 0.4,
-    position: { y: 0.05 },
+    scale: 0.9,
+    position: { y: 0.03 },
   },
 }
 

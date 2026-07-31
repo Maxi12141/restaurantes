@@ -7,9 +7,7 @@ import {
   orientToQuaternion,
   requestOrientationPermission,
 } from '../ar/deviceOrientation'
-import { loadModel } from '../ar/loadModel'
 import { createRestaurantScene } from '../ar/scene'
-import { testGLB } from '../ar/testGLB'
 import { getDish } from '../data/menu'
 
 export function PlateArPage() {
@@ -113,18 +111,15 @@ export function PlateArPage() {
         renderer.setSize(canvas.clientWidth, canvas.clientHeight, false)
         renderer.outputColorSpace = THREE.SRGBColorSpace
         renderer.toneMapping = THREE.ACESFilmicToneMapping
-        renderer.toneMappingExposure = 1
+        renderer.toneMappingExposure = 1.15
         renderer.setClearColor(0x000000, 0)
 
         const scene = createRestaurantScene({
           renderer,
+          includeEnvironment: false,
         })
         // Fondo nulo para que se vea el video de la cámara AR.
         scene.background = null
-
-        const test = await loadModel('/models/plates/white_plate.glb')
-        console.log('TEST WHITE PLATE:', test)
-        testGLB('/models/plates/ceramic_plate.glb')
 
         try {
           plate = await createDishPlate(
